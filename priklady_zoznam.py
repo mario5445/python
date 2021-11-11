@@ -21,7 +21,16 @@
     #if otazka in moznosti:
      #   break
 
-zadaj = list((input("Zadaj číslo:")))
+zoznam = []
+while(True):
+    zadaj = input("Zadaj jedno číslo:")
+    zoznam.append(zadaj)
+    if zadaj == "":
+        zoznam.sort()
+        dlzka = len(zoznam)
+        if dlzka%2
+        vypocet = round(dlzka/2) - 1
+        print(zoznam[vypocet])
 
 
 
