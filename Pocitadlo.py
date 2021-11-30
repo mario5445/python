@@ -1,7 +1,7 @@
 slovo = input("Zadaj slovo:")
-samohlasky = "a", "e", "i", "o", "u", "y"
-spoluhlasky = "r", "t", "z", "p", "s", "d", "f", "g", "h", "j", "k", "l", "c", "v", "b", "n", "m", "q", "w", "x"
-cisla = "9", "8", "7", "6", "5", "4", "3", "2", "1", "0",
+samohlasky = "aáäiíoóeéôuúyý"
+spoluhlasky = "qwrtzpsdfghjklxcvbnmľďščťžňĺŕ"
+cisla = "0123456789"
 pocitadlo_samohlasky = 0
 pocitadlo_spoluhlasky = 0
 pocitadlo_cisla = 0    
