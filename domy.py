@@ -12,16 +12,19 @@ while True:
         break
 maximal = max(domy)
 
-for pra in domy:
-    pra = 0
-    if pra in domy:
-        prazdne += 1
+
 print("Počet obyvateľov je:", sum(domy))
 print("Najviac", maximal , "žije v jednej domácnosti")
+
 for i in domy:
-    i = max(domy)
-    if i in domy:
-        pocet_maximal +=1
+    if i == 0:
+        prazdne += 1
+
+for a in domy:
+    if a == max(domy):
+        pocet_maximal += 1
+
+
 print("Domov s najväčsím počtom  obyvateľov je:", pocet_maximal)
 
 print("Prazdnych domov je:", prazdne)
