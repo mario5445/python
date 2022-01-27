@@ -1,45 +1,40 @@
 import pyglet
-
-#KONSTANTY OKNA
 from pyglet import gl
+import random
 
-SIRKA = 1000
-VYSKA = 700
+#nastavenie sirky a vysky
+from pyglet.window import key
 
-#LOPTA
-VELKOST_LOPTY= 20
-RYCHLOST = 200 #pixely za sekundu
+sirka = 1300
+vyska = 700
 
-#PALKY
-TLSTKA_PALKY = 10
-VYSKA_PALKY = 100
-RYCHLOST_PALKY =  RYCHLOST * 1.5
+#lopta
+velkost_lopty = 20
+RYCHLOST = 200
+#hrubka deliacej ciary
+ciara_hrubka = 20
+#palky
+dlzka_palky = 10
+vyska_palky = 100
+RYCHLOST_PALKY = RYCHLOST*3
 
-
-#PROSTREDNA CIARA
-CIARA_HRUBKA = 20
-
-#FONT
+#font
 VELKOST_FONTU = 42
 ODSADENIE_TEXTU = 30
 
-#STAVOVE PREMENEN
-pozicia_palok = [VYSKA //2, VYSKA//2]
-pozicia_lopty = [SIRKA//2,VYSKA//2]
-rychlost_lopty =[0,0]
-stisknute_klavesy = set()
-skore = [0,0]
+#stavove premenne
+pozicia_palok = [vyska//2, vyska//2]
+pozicia_lopty = [sirka//2, vyska//2]
+rychlost_lopty = [0,0]
+zmacknute_klavesy = set()
+skore = [9,9]
+text = "koniec"
 
-"""
-Nakresli obdelnik na dane souradnice
-Nazorny diagram::
-     y2 - +-----+
-          |/////|
-     y1 - +-----+
-          :     :
-         x1    x2
-"""
-def vykresli_obdlznik(x1,y1, x2,y2):
+
+
+
+
+def vykresli_obdlznik(x1, y1, x2, y2):
     # Tady pouzijeme volani OpenGL, ktere je pro nas zatim asi nejjednodussi
     # na pouziti
     gl.glBegin(gl.GL_TRIANGLE_FAN)  # zacni kreslit spojene trojuhelniky
@@ -48,59 +43,152 @@ def vykresli_obdlznik(x1,y1, x2,y2):
     gl.glVertex2f(int(x2), int(y2))  # vrchol C, nakresli trojuhelnik ABC
     gl.glVertex2f(int(x2), int(y1))  # vrchol D, nakresli trojuhelnik BCD
     # dalsi souradnice E by nakreslila trojuhelnik CDE, atd.
-    gl.glEnd()  # ukonci kresleni trojuhelniku
-
-def nakresli_text(text, x, y, pozice_x):
-    """Nakresli dany text na danou pozici
-    Argument ``pozice_x`` muze byt "left" nebo "right", udava na kterou stranu
-    bude text zarovnany
-    """
-    napis = pyglet.text.Label(text,font_size=VELKOST_FONTU,x=x,y=y,anchor_x=pozice_x)
+    gl.glEnd()
+def nakresli_text(text, x, y, pozicia_x):
+    napis = pyglet.text.Label(
+        text,
+        font_size=VELKOST_FONTU,
+        x=x,
+        y=y,
+        anchor_x=pozicia_x
+    )
     napis.draw()
 
+
+def reset():
+    pozicia_lopty[0] = sirka // 2
+    pozicia_lopty[1] = vyska // 2
+    # X-OVA RYCHLOST
+    if random.randint(0, 1):
+        rychlost_lopty[0] = RYCHLOST
+    else:
+        rychlost_lopty[0] = -RYCHLOST
+
+    # y-ova rychlost - uplne nahodna
+    rychlost_lopty[1] = random.uniform(-1, 1) * RYCHLOST
+
+
+def stisk_klavesnice(symbol, modifikatory):
+    if symbol == key.W:
+        zmacknute_klavesy.add(('hore', 0))
+    if symbol == key.S:
+        zmacknute_klavesy.add(('dole', 0))
+    if symbol == key.UP:
+        zmacknute_klavesy.add(('hore', 1))
+    if symbol == key.DOWN:
+        zmacknute_klavesy.add(('dole', 1))
+
+def pusti_klavesnice(symbol, modifikatory):
+    if symbol == key.W:
+        zmacknute_klavesy.discard(('hore', 0))
+    if symbol == key.S:
+        zmacknute_klavesy.discard(('dole', 0))
+    if symbol == key.UP:
+        zmacknute_klavesy.discard(('hore', 1))
+    if symbol == key.DOWN:
+        zmacknute_klavesy.discard(('dole', 1))
+
 def vykresli():
-    """Vykresli stav hry"""
-    gl.glClear(gl.GL_COLOR_BUFFER_BIT)  # smaz obsah okna (vybarvi na cerno)
-    gl.glColor3f(1, 1, 1)  # nastav barvu kresleni na bilou
-
-    #Vykresli loptu
+    #vykresli stav hry
+    gl.glClear(gl.GL_COLOR_BUFFER_BIT) #smaz obsah okna
+    gl.glColor3f(1, 1, 1) #nastav farbu
     vykresli_obdlznik(
-       pozicia_lopty[0] - VELKOST_LOPTY //2,
-       pozicia_lopty[1] - VELKOST_LOPTY //2,
-       pozicia_lopty[0] + VELKOST_LOPTY //2,
-       pozicia_lopty[1] + VELKOST_LOPTY //2
+        pozicia_lopty[0] - velkost_lopty//2,
+        pozicia_lopty[1] - velkost_lopty//2,
+        pozicia_lopty[0] + velkost_lopty//2,
+        pozicia_lopty[1] + velkost_lopty//2
     )
+    for x,y in [(0, pozicia_palok[0]), (sirka, pozicia_palok[1])]:
+       vykresli_obdlznik(
+            x - dlzka_palky,
+            y - vyska_palky // 2,
+            x + dlzka_palky,
+            y + vyska_palky //2
 
-    #Vykreslit palky
-    # palky - udelame si seznam souradnic palek a pro kazdou dvojici souradnic
-    # v tom seznamu palku vykreslime
-    for x, y in [(0, pozicia_palok[0]), (SIRKA, pozicia_palok[1])]:
+       )
+    for y in range(ciara_hrubka //2, vyska, ciara_hrubka * 2):
         vykresli_obdlznik(
-            x - TLSTKA_PALKY,
-            y - VYSKA_PALKY // 2,
-            x + TLSTKA_PALKY,
-            y + VYSKA_PALKY // 2,
-        )
-
-    #Vykreslenie: Poliacia ciara
-    # prerusovana pulici cara - slozena ze spousty malych obdelnicku
-    for y in range(CIARA_HRUBKA // 2, VYSKA, CIARA_HRUBKA * 2):
-        vykresli_obdlznik(
-            SIRKA // 2 - 1,
+            sirka//2-1,
             y,
-            SIRKA // 2 + 1,
-            y + CIARA_HRUBKA
+            sirka//2+1,
+            y + ciara_hrubka
         )
+    #skore
+    nakresli_text(str(skore[0]), x=ODSADENIE_TEXTU, y=vyska - ODSADENIE_TEXTU - VELKOST_FONTU, pozicia_x='left')
+    nakresli_text(str(skore[1]), x=sirka-ODSADENIE_TEXTU, y=vyska-ODSADENIE_TEXTU-VELKOST_FONTU,pozicia_x='right')
+    nakresli_text(text, x=ODSADENIE_TEXTU, y=vyska - ODSADENIE_TEXTU - VELKOST_FONTU, pozicia_x='center')
 
-    #vykreslit score
-    nakresli_text(str(skore[0]),x=ODSADENIE_TEXTU,y = VYSKA- ODSADENIE_TEXTU - VELKOST_FONTU,pozice_x='left')
-    nakresli_text(str(skore[1]),x=SIRKA-ODSADENIE_TEXTU,y = VYSKA- ODSADENIE_TEXTU - VELKOST_FONTU,pozice_x='right')
 
-window = pyglet.window.Window(width=SIRKA,height=VYSKA)
+def obnov_stav(dT):
+    #pohyb palok
+    if skore[0] == 10 or skore[1] == 10:
+        nakresli_text(text, x=ODSADENIE_TEXTU, y=vyska - ODSADENIE_TEXTU - VELKOST_FONTU, pozicia_x='center')
+    for cislo_palky in (0,1):
+        if ('hore', cislo_palky) in zmacknute_klavesy:
+            pozicia_palok[cislo_palky] += RYCHLOST_PALKY*dT
+        if ('dole', cislo_palky) in zmacknute_klavesy:
+            pozicia_palok[cislo_palky] -= RYCHLOST_PALKY * dT
+
+        #dolna zarazka
+        if pozicia_palok[cislo_palky] < vyska_palky /2:
+            pozicia_palok[cislo_palky] = vyska_palky /2
+        #horna zarazka
+        if pozicia_palok[cislo_palky] > vyska - vyska_palky/2:
+            pozicia_palok[cislo_palky] = vyska - vyska_palky/2
+    #pohyb lopty
+    pozicia_lopty[0] += rychlost_lopty[0] * dT
+    pozicia_lopty[1] += rychlost_lopty[1] * dT
+
+    #odrazenie lopty
+    if pozicia_lopty[1] < velkost_lopty:
+        rychlost_lopty[1] = abs(rychlost_lopty[1])
+    if pozicia_lopty[1] > vyska - velkost_lopty//2:
+        rychlost_lopty[1] = -abs(rychlost_lopty[1]) / 2
+    #zistenie borderov palky
+    palka_min = pozicia_lopty[1] - velkost_lopty/2 - vyska_palky/2
+    palka_max = pozicia_lopty[1] + velkost_lopty/2 + vyska_palky/2
+
+    #odraz zlava
+    if pozicia_lopty[0] < dlzka_palky + velkost_lopty/2:
+        if palka_min < pozicia_palok[0] < palka_max:
+            #odrazime loptu
+            rychlost_lopty[0] = abs(rychlost_lopty[0])
+        else:
+            #palka jeinde ako lopta a hrac prehral
+            skore[1] += 1
+            reset()
+
+
+
+    #odarz zprava
+    if pozicia_lopty[0] > sirka - (dlzka_palky + velkost_lopty/2):
+        if palka_min < pozicia_palok[1] < palka_max:
+            # odrazime loptu
+            rychlost_lopty[0] = -abs(rychlost_lopty[0])
+        else:
+            # palka je inde ako lopta a hrac prehral
+            skore[0] += 1
+            reset()
+
+
+reset()
+window = pyglet.window.Window(width=sirka, height=vyska)
 window.push_handlers(
-    on_draw=vykresli,
+    on_draw = vykresli,
+    on_key_press =stisk_klavesnice,
+    on_key_release=pusti_klavesnice,
 )
 
+pyglet.clock.schedule(obnov_stav)
+
+
+
+
+
+
+
+
+
+
+
 pyglet.app.run()
-
-
