@@ -28,7 +28,7 @@ pozicia_lopty = [sirka//2, vyska//2]
 rychlost_lopty = [0,0]
 zmacknute_klavesy = set()
 skore = [9,9]
-text = "koniec"
+
 
 
 
@@ -47,10 +47,11 @@ def vykresli_obdlznik(x1, y1, x2, y2):
 def nakresli_text(text, x, y, pozicia_x):
     napis = pyglet.text.Label(
         text,
+        font_name='Times New Roman',
         font_size=VELKOST_FONTU,
         x=x,
         y=y,
-        anchor_x=pozicia_x
+        anchor_x=pozicia_x,
     )
     napis.draw()
 
@@ -77,6 +78,10 @@ def stisk_klavesnice(symbol, modifikatory):
         zmacknute_klavesy.add(('hore', 1))
     if symbol == key.DOWN:
         zmacknute_klavesy.add(('dole', 1))
+    if symbol == key.ENTER:
+        zmacknute_klavesy.add("e")
+    if symbol == key.R:
+        zmacknute_klavesy.add("r")
 
 def pusti_klavesnice(symbol, modifikatory):
     if symbol == key.W:
@@ -87,17 +92,30 @@ def pusti_klavesnice(symbol, modifikatory):
         zmacknute_klavesy.discard(('hore', 1))
     if symbol == key.DOWN:
         zmacknute_klavesy.discard(('dole', 1))
-
+    if symbol == key.ENTER:
+        zmacknute_klavesy.discard("e")
+    if symbol == key.R:
+        zmacknute_klavesy.discard("r")
 def vykresli():
     #vykresli stav hry
-    gl.glClear(gl.GL_COLOR_BUFFER_BIT) #smaz obsah okna
-    gl.glColor3f(1, 1, 1) #nastav farbu
-    vykresli_obdlznik(
-        pozicia_lopty[0] - velkost_lopty//2,
-        pozicia_lopty[1] - velkost_lopty//2,
-        pozicia_lopty[0] + velkost_lopty//2,
-        pozicia_lopty[1] + velkost_lopty//2
-    )
+    if skore[0] == 9 and skore[1] == 9:
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT)  # smaz obsah okna
+        gl.glColor3f(random.uniform(0,1), random.uniform(0,1), random.uniform(0,1))  # nastav farbu
+        vykresli_obdlznik(
+            pozicia_lopty[0] - velkost_lopty // 2,
+            pozicia_lopty[1] - velkost_lopty // 2,
+            pozicia_lopty[0] + velkost_lopty // 2,
+            pozicia_lopty[1] + velkost_lopty // 2
+        )
+    else:
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT) #smaz obsah okna
+        gl.glColor3f(1, 1, 1) #nastav farbu
+        vykresli_obdlznik(
+            pozicia_lopty[0] - velkost_lopty//2,
+            pozicia_lopty[1] - velkost_lopty//2,
+            pozicia_lopty[0] + velkost_lopty//2,
+            pozicia_lopty[1] + velkost_lopty//2
+        )
     for x,y in [(0, pozicia_palok[0]), (sirka, pozicia_palok[1])]:
        vykresli_obdlznik(
             x - dlzka_palky,
@@ -116,19 +134,35 @@ def vykresli():
     #skore
     nakresli_text(str(skore[0]), x=ODSADENIE_TEXTU, y=vyska - ODSADENIE_TEXTU - VELKOST_FONTU, pozicia_x='left')
     nakresli_text(str(skore[1]), x=sirka-ODSADENIE_TEXTU, y=vyska-ODSADENIE_TEXTU-VELKOST_FONTU,pozicia_x='right')
-    nakresli_text(text, x=ODSADENIE_TEXTU, y=vyska - ODSADENIE_TEXTU - VELKOST_FONTU, pozicia_x='center')
+    """pyglet.clock.schedule_once(nakresli_text("Press 'R' to restart the game.", x=sirka//2, y=700/14, pozicia_x='center'), 3)"""
+    if skore[0] == 10 or skore[1] == 10:
+        if skore[0] == 10:
+
+            window.clear()
+            nakresli_text('Player 1 wins, press ENTER to exit', x=sirka//2, y=vyska//2, pozicia_x='center')
+
+        else:
+            window.clear()
+            nakresli_text('Player 2 wins, press ENTER to exit', x=sirka // 2, y=vyska // 2, pozicia_x='center')
+
+
+
+
 
 
 def obnov_stav(dT):
     #pohyb palok
-    if skore[0] == 10 or skore[1] == 10:
-        nakresli_text(text, x=ODSADENIE_TEXTU, y=vyska - ODSADENIE_TEXTU - VELKOST_FONTU, pozicia_x='center')
     for cislo_palky in (0,1):
         if ('hore', cislo_palky) in zmacknute_klavesy:
             pozicia_palok[cislo_palky] += RYCHLOST_PALKY*dT
         if ('dole', cislo_palky) in zmacknute_klavesy:
             pozicia_palok[cislo_palky] -= RYCHLOST_PALKY * dT
-
+        if "e" in zmacknute_klavesy:
+            exit()
+        if "r" in zmacknute_klavesy:
+            skore[0] = 0
+            skore[1] = 0
+            reset()
         #dolna zarazka
         if pozicia_palok[cislo_palky] < vyska_palky /2:
             pozicia_palok[cislo_palky] = vyska_palky /2
@@ -150,14 +184,16 @@ def obnov_stav(dT):
 
     #odraz zlava
     if pozicia_lopty[0] < dlzka_palky + velkost_lopty/2:
-        if palka_min < pozicia_palok[0] < palka_max:
-            #odrazime loptu
-            rychlost_lopty[0] = abs(rychlost_lopty[0])
+        if skore[0] != 10 or skore[1] != 10:
+            if palka_min < pozicia_palok[0] < palka_max:
+                #odrazime loptu
+                rychlost_lopty[0] = abs(rychlost_lopty[0])
+            else:
+                #palka jeinde ako lopta a hrac prehral
+                skore[1] += 1
+                reset()
         else:
-            #palka jeinde ako lopta a hrac prehral
-            skore[1] += 1
-            reset()
-
+            pass
 
 
     #odarz zprava
