@@ -4,14 +4,19 @@ import sys
 
 
 #generating of enemies
-def generate_enemy():
+def generate_enemy(image):
     return {
         "x":random.choice(range(10,780,50)),
-        "y":random.choice(range(-10, -600, -50))
-
+        "y":random.choice(range(-10, -600, -50)),
+        "mask": pygame.mask.from_surface(image)
     }
-
-
+def colision_check(mask1, mask2, mask1_coordinates, mask2_coordinates):
+    x = mask2_coordinates[0] - mask1_coordinates[0]
+    y = mask2_coordinates[1] - mask1_coordinates[1]
+    if mask1.overlap(mask2, (x,y)):
+        return True
+    else:
+        return False
 
 
 
@@ -37,19 +42,21 @@ if __name__ == "__main__":
     pozadie = pygame.image.load("vesmir.jpg")
     ufo = pygame.image.load("lod.png")
     enemy_img = pygame.image.load('nepriatel.png')
+    #mask creating(for ship)
+    ufo_mask = pygame.mask.from_surface(ufo)
     #window create
     window = pygame.display.set_mode((sirka, vyska))
 
     #append of enemy
     for i in range(enemy_count):
-        enemies.append(generate_enemy())
+        enemies.append(generate_enemy(enemy_img))
     #game
     while True:
         skore_vypis = font.render(f"Score {skore}", True, (255,255,255))
         #enemy speed+, count+
         if len(enemies) == 0:
             for i in range(5):
-                enemies.append(generate_enemy())
+                enemies.append(generate_enemy(enemy_img))
             enemy_speed += 0.8
             enemy_count += enemy_plus
 
