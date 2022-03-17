@@ -10,6 +10,8 @@ def generate_enemy(image):
         "y":random.choice(range(-10, -600, -50)),
         "mask": pygame.mask.from_surface(image)
     }
+
+
 def colision_check(mask1, mask2, mask1_coordinates, mask2_coordinates):
     x = mask2_coordinates[0] - mask1_coordinates[0]
     y = mask2_coordinates[1] - mask1_coordinates[1]
@@ -37,8 +39,6 @@ if __name__ == "__main__":
     skore_x = sirka - 100
     skore_y = 33
     enemy_speed = 3
-    enemy_count = 0
-    enemy_plus = 4
     #image load
     pozadie1 = pygame.image.load("vesmir.jpg")
     pozadie2 = pygame.image.load("Star_wars.jpg")
@@ -50,17 +50,16 @@ if __name__ == "__main__":
     window = pygame.display.set_mode((sirka, vyska))
 
     #append of enemy
-    for i in range(enemy_count):
-        enemies.append(generate_enemy(enemy_img))
+
     #game
     while True:
         skore_vypis = font.render(f"Score {skore}", True, (255,255,255))
         #enemy speed+, count+
         if len(enemies) == 0:
-            for i in range(5):
+            for i in range(10):
                 enemies.append(generate_enemy(enemy_img))
             enemy_speed += 0.8
-            enemy_count += enemy_plus
+
 
         #exit formula
         for event in pygame.event.get():
