@@ -36,7 +36,7 @@ if __name__ == "__main__":
     vyska = 600
     ufo_x = sirka//2
     ufo_y = vyska//2+220
-    skore_x = sirka - 100
+    skore_x = sirka - 120
     skore_y = 33
     enemy_speed = 3
     #image load
