@@ -1,5 +1,7 @@
 import math
 import random
+from select import select
+from turtle import st
 
 import pyglet
 from pyglet import gl
@@ -20,9 +22,11 @@ batch = pyglet.graphics.Batch() #ZOZNAM SPRITOV PRE ZJEDNODUŠENÉ VYKRESLENIE
 pressed_keyboards = set()       #MNOŽINA ZMAČKNUTÝCH KLÁVES
 
 # Todo: Pridaj KONŠTANTY pre delay na strelbu, laserlifetime, laserspeed
-SHOT_DELAY = 0.8
-LASER_LIFETIME = 3
-LASER_SPEED = 50
+SHOT_DELAY = 0.5
+LASER_LIFETIME = 29
+LASER_SPEED = 350
+
+SHIELD_LIFETIME = 50
 
 "Score"
 score = 0
@@ -132,18 +136,55 @@ class SpaceObject:
 Trieda Spaceship
 Hlavný objekt hry, predstavuje hráča
 """
+class Shield(SpaceObject):
+    def __init__(self, sprite, x, y, speed_x=0, speed_y=0):
+        super().__init__(sprite, x, y, speed_x, speed_y)
+        self.shieldlifetime = SHIELD_LIFETIME
+
+    def tick(self, dt):
+        super().tick(dt) 
+        self.shieldlifetime -= 0.5
+        if self.shieldlifetime == 0:
+            self.delete()   
+   
+        
+
 class Spaceship(SpaceObject):
 
     "Konśtruktor"
     def __init__(self, sprite, x ,y):
         super().__init__(sprite,x,y)
-        self.fire = -1 #PREMENNÁ PRE DELAY streľby
-
+        self.ready_laser = True
     """
     Metóda zodpovedná za vystrelenie laseru
     """
     def shoot(self):
         # Todo: Vytvor nový objekt typu Laser a nastav parameter fire na hodnotu delayu
+        laser_img_list = ['Assetss\PNG\Lasers\laserBlue01.png',
+        'Assetss\PNG\Lasers\laserBlue02.png',
+        'Assetss\PNG\Lasers\laserBlue03.png',
+        'Assetss\PNG\Lasers\laserBlue04.png',
+        'Assetss\PNG\Lasers\laserBlue05.png',
+        'Assetss\PNG\Lasers\laserBlue06.png',
+        'Assetss\PNG\Lasers\laserBlue07.png',
+        'Assetss\PNG\Lasers\laserBlue08.png',
+        'Assetss\PNG\Lasers\laserBlue09.png',
+        'Assetss\PNG\Lasers\laserBlue10.png',
+        'Assetss\PNG\Lasers\laserBlue11.png',
+        'Assetss\PNG\Lasers\laserBlue12.png',
+        'Assetss\PNG\Lasers\laserBlue13.png',
+        'Assetss\PNG\Lasers\laserBlue14.png',
+        'Assetss\PNG\Lasers\laserBlue15.png',
+        'Assetss\PNG\Lasers\laserBlue16.png',
+        ]
+
+        laser_img = pyglet.image.load(random.choice(laser_img_list))
+        set_anchor_of_image_to_center(laser_img)
+        laser_x = self.sprite.x + math.cos(self.rotation) * self.radius
+        laser_y = self.sprite.y + math.cos(self.rotation) * self.radius
+        laser = Laser(laser_img, laser_x, laser_y)
+        laser.rotation = self.rotation
+        game_objects.append(laser)
         pass
 
     """
@@ -166,11 +207,11 @@ class Spaceship(SpaceObject):
 
         "Otočenie doľava - A"
         if 'A' in pressed_keyboards:
-            self.rotation -= ROTATION_SPEED
+            self.rotation += ROTATION_SPEED
 
         "Otočenie doprava - D"
         if 'D' in pressed_keyboards:
-            self.rotation += ROTATION_SPEED
+            self.rotation -= ROTATION_SPEED
 
         "Ručná brzda - SHIFT"
         if 'SHIFT' in pressed_keyboards:
@@ -179,6 +220,10 @@ class Spaceship(SpaceObject):
 
         # Todo: pridaj akciu po stlačení tlačítka SPACE = shoot
         #self.fire -= dt # Todo: Je treba odčítať delay z fire
+        if 'SPACE' in pressed_keyboards and self.ready_laser:
+            self.shoot()
+            self.ready_laser = False
+            pyglet.clock.schedule_once(self.reload, SHOT_DELAY)
 
         "VYBERIE VŠETKY OSTATNE OBJEKTY OKREM SEBA SAMA"
         for obj in [o for o in game_objects if o != self]:
@@ -195,6 +240,18 @@ class Spaceship(SpaceObject):
         self.rotation = 1.57  # radiany -> smeruje hore
         self.x_speed = 0
         self.y_speed = 0
+        shield_img = pyglet.image.load('Assetss\PNG\Effects\shield1.png')
+        set_anchor_of_image_to_center(shield_img)
+        shield_x = self.sprite.x 
+        shield_y = self.sprite.y
+        shield = Shield(shield_img, shield_x, shield_y)
+        game_objects.append(shield)
+        
+        
+
+    
+    def reload(self, dt):
+        self.ready_laser = True
 
 
 """
@@ -203,13 +260,27 @@ Trieda Asteroid
 class Asteroid(SpaceObject):
     "Metóda ktorá sa vykoná ak dôjde ku kolízii lode a asteroidu"
     def hit_by_spaceship(self, ship):
+        global score, scoreLabel
         pressed_keyboards.clear()
         ship.reset()
         self.delete()
+        if score >= 0 and score < 50:
+            if score >= 10:
+                score -= 10
+            else:
+                pass
+        else:
+            score -= 50
 
     "Metóda ktorá sa vykoná ak dôjde ku kolíziiwwwww a asteroidu"
     def hit_by_laser(self, laser):
+        global score
         # Todo: update score + kolizia
+        pressed_keyboards.clear
+        self.delete() 
+        laser.delete()
+        score += 10
+        
         pass
 
 """
@@ -217,6 +288,24 @@ Trieda Laser
 """
 class Laser(SpaceObject):
     #Todo: dorobiť triedu Laser
+    def __init__(self, sprite, x, y, speed_x=0, speed_y=0):
+        super().__init__(sprite, x, y, speed_x, speed_y)
+        self.laserlifetime = LASER_LIFETIME
+
+    def tick(self, dt):
+        super().tick(dt)
+        self.laserlifetime -= 0.5
+        if self.laserlifetime == 0:
+            self.delete()
+
+        self.x_speed =  LASER_SPEED * math.cos(self.rotation)
+        self.y_speed = LASER_SPEED * math.sin(self.rotation)    
+
+        for obj in [o for o in game_objects if o != self and o != Spaceship]:
+            d = self.distance(obj)
+            if d < self.radius + obj.radius:
+                obj.hit_by_laser(self)
+                break
     pass
 
 
@@ -235,13 +324,45 @@ class Game:
     Načítanie všetkých spritov
     """
     def load_resources(self):
-        self.playerShip_image = pyglet.image.load('Assetss/PNG/playerShip1_blue.png')
+        list_of_spaceship = ['Assetss/PNG/playerShip1_blue.png',
+        'Assetss\PNG\playerShip1_green.png',
+        'Assetss\PNG\playerShip1_orange.png',
+        'Assetss\PNG\playerShip1_red.png',
+        'Assetss\PNG\playerShip2_blue.png',
+        'Assetss\PNG\playerShip2_green.png',
+        'Assetss\PNG\playerShip2_orange.png',
+        'Assetss\PNG\playerShip2_red.png',
+        'Assetss\PNG\playerShip3_blue.png',
+        'Assetss\PNG\playerShip3_green.png',
+        'Assetss\PNG\playerShip3_orange.png',
+        'Assetss\PNG\playerShip3_red.png']
+        self.playerShip_image = pyglet.image.load(random.choice(list_of_spaceship))
         set_anchor_of_image_to_center(self.playerShip_image)
-        self.background_image = pyglet.image.load('Assetss/Backgrounds/black.png')
+        list_of_backgrounds = [r'Assetss\Backgrounds\black.png',
+        r'Assetss\Backgrounds\blue.png',
+        'Assetss\Backgrounds\darkPurple.png',
+        'Assetss\Backgrounds\purple.png']
+        self.background_image = pyglet.image.load(random.choice(list_of_backgrounds))
         self.asteroid_images = ['Assetss/PNG/Meteors/meteorGrey_big1.png',
                            'Assetss/PNG/Meteors/meteorGrey_med1.png',
                            'Assetss/PNG/Meteors/meteorGrey_small1.png',
-                           'Assetss/PNG/Meteors/meteorGrey_tiny1.png']
+                           'Assetss/PNG/Meteors/meteorGrey_tiny1.png',
+                           'Assetss\PNG\Meteors\meteorBrown_big1.png',
+                           'Assetss\PNG\Meteors\meteorBrown_big2.png',
+                           'Assetss\PNG\Meteors\meteorBrown_big3.png',
+                           'Assetss\PNG\Meteors\meteorBrown_big4.png',
+                           'Assetss\PNG\Meteors\meteorBrown_med1.png',
+                           'Assetss\PNG\Meteors\meteorBrown_med3.png',
+                           'Assetss\PNG\Meteors\meteorBrown_small1.png',
+                           'Assetss\PNG\Meteors\meteorBrown_small2.png',
+                           'Assetss\PNG\Meteors\meteorBrown_tiny1.png',
+                           'Assetss\PNG\Meteors\meteorBrown_tiny2.png',
+                           'Assetss\PNG\Meteors\meteorGrey_big2.png',
+                           'Assetss\PNG\Meteors\meteorGrey_big3.png',
+                           'Assetss\PNG\Meteors\meteorGrey_big4.png',
+                           'Assetss\PNG\Meteors\meteorGrey_med2.png',
+                           'Assetss\PNG\Meteors\meteorGrey_small2.png',
+                           'Assetss\PNG\Meteors\meteorGrey_tiny2.png']
 
     """
     Vytvorenie objektov pre začiatok hry
@@ -259,14 +380,14 @@ class Game:
         #Vytvorenie Meteoritov
         self.create_asteroids(count=7)
         #Pridavanie novych asteroidoch každych 10 sekund
-        pyglet.clock.schedule_interval(self.create_asteroids, 10, 1)
+        pyglet.clock.schedule_interval(self.create_asteroids, 8, 1)
 
     def create_asteroids(self, dt=0, count=1):
         "Vytvorenie X asteroidov"
         for i in range(count):
             # Výber asteroidu náhodne
-            img = pyglet.image.load(random.choice(self.asteroid_images))
-            set_anchor_of_image_to_center(img)
+            asteroids_img = pyglet.image.load(random.choice(self.asteroid_images))
+            set_anchor_of_image_to_center(asteroids_img)
 
             # Nastavenie pozície na okraji obrazovky náhodne
             position = [0, 0]
@@ -279,21 +400,25 @@ class Game:
             tmp_speed_y = random.uniform(-100, 100)
 
             #Temp asteroid object
-            asteroid = Asteroid(img, position[0], position[1], tmp_speed_x, tmp_speed_y)
+            asteroid = Asteroid(asteroids_img, position[0], position[1], tmp_speed_x, tmp_speed_y)
             game_objects.append(asteroid)
 
     """
     Event metóda ktorá sa volá na udalosť on_draw stále dookola
     """
     def draw_game(self):
+        global score, scoreLabel
         # Vymaže aktualny obsah okna
         self.window.clear()
         # Vykreslenie pozadia
         self.background.draw()
+        scoreLabel = pyglet.text.Label(text=str(score), font_size=40,x = 1150, y = 760, anchor_x='right', anchor_y='center')
+        scoreLabel.draw()
 
         "Vykreslenie koliznych koliečok"
+        """
         for o in game_objects:
-            draw_circle(o.sprite.x, o.sprite.y, o.radius)
+            draw_circle(o.sprite.x, o.sprite.y, o.radius)"""
 
         # Táto časť sa stará o to aby bol prechod cez okraje okna plynulý a nie skokový
         for x_offset in (-self.window.width, 0, self.window.width):
