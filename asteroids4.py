@@ -1,9 +1,5 @@
 import math
 import random
-from select import select
-from textwrap import shorten
-from turtle import st
-
 import pyglet
 from pyglet import gl
 from pyglet.window import key
@@ -315,7 +311,7 @@ class Asteroid(SpaceObject):
     def hit_by_laser(self, laser):
         global score
         # Todo: update score + kolizia
-        pressed_keyboards.clear
+        pressed_keyboards.clear()
         self.delete() 
         laser.delete()
         score += 10

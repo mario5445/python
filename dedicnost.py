@@ -44,6 +44,7 @@ for zvieratko in zvieratka:
 
 class A(Pes,Macka):
     pass
+
 a = A("a")
 a.zamnaukaj()
 a.zastekaj()
